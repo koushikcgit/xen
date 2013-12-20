@@ -642,6 +642,11 @@ typedef struct libxl__ctx libxl_ctx;
  */
 #define LIBXL_HAVE_DEVICE_CHANNEL 1
 
+/*
+ * LIBXL_HAVE_AO_CANCEL indicates the availability of libxl_ao_cancel
+ */
+#define LIBXL_HAVE_AO_CANCEL 1
+
 /* Functions annotated with LIBXL_EXTERNAL_CALLERS_ONLY may not be
  * called from within libxl itself. Callers outside libxl, who
  * do not #include libxl_internal.h, are fine. */
@@ -903,6 +908,65 @@ typedef struct {
     libxl_ev_user for_event; /* always used */
     void *for_callback; /* passed to callback */
 } libxl_asyncprogress_how;
+
+/*
+ * It is sometimes possible to cancel an asynchronous operation.
+ *
+ * libxl_ao_cancel searches for an ongoing asynchronous operation whose
+ * ao_how is identical to *how, and tries to cancel it.  The return
+ * values from libxl_ao_cancel are as follows:
+ *
+ *  0
+ *
+ *     The operation in question has (at least some) support for
+ *     cancellation.  It will be cut short.  However, it may still
+ *     take some time to cancel.
+ *
+ *  ERROR_NOTFOUND
+ *
+ *      No matching ongoing operation was found.  This might happen
+ *      for an actual operation if the operation has already completed
+ *      (perhaps on another thread).  The call to libxl_ao_cancel has
+ *      had no effect.
+ *
+ *  ERROR_NOTIMPLEMENTED
+ *
+ *     As far as could be determined, the operation in question does
+ *     not support cancellation.  The operation may subsequently
+ *     complete normally, as if it had never been cancelled; however,
+ *     the cancellation attempt will still have been noted and it is
+ *     possible that the operation will be successfully cancelled.
+ *
+ *  ERROR_CANCELLED
+ *
+ *     The operation has already been the subject of at least one
+ *     call to libxl_ao_cancel.
+ *
+ * If the operation was indeed cut short due to the cancellation, it
+ * will complete, at some point in the future, with ERROR_CANCELLED.
+ * In that case, depending on the operation it have performed some of
+ * the work in question and left the operation half-done.  Consult the
+ * documentation for individual operations.
+ *
+ * Note that a cancelled operation might still fail for other reasons
+ * even after it has been cancelled.
+ *
+ * If your application is multithreaded you must not reuse an
+ * ao_how->for_event or ao_how->for_callback value (with a particular
+ * ao_how->callback) unless you are sure that none of your other
+ * threads are going to cancel the previous operation using that
+ * value; otherwise you risk cancelling the wrong operation if the
+ * intended target of the cancellation completes in the meantime.
+ *
+ * It is possible to cancel even an operation which is being performed
+ * synchronously, but since in that case how==NULL you had better only
+ * have one such operation, because it is not possible to tell them
+ * apart.  (And, if you want to do this, obviously the cancellation
+ * would have to be requested on a different thread.)
+ */
+int libxl_ao_cancel(libxl_ctx *ctx, const libxl_asyncop_how *how)
+                    LIBXL_EXTERNAL_CALLERS_ONLY;
+
 
 #define LIBXL_VERSION 0
 

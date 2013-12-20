@@ -173,6 +173,41 @@ struct libxl__ev_fd {
 };
 
 
+typedef struct libxl__ao_cancellable libxl__ao_cancellable;
+typedef void libxl__ao_cancellable_callback(libxl__egc *egc,
+                  libxl__ao_cancellable *cancellable, int rc /* CANCELLED */);
+
+struct libxl__ao_cancellable {
+    /* caller must fill this in and it must remain valid */
+    libxl__ao *ao;
+    libxl__ao_cancellable_callback *callback;
+    /* remainder is private for cancellation machinery */
+    bool registered;
+    LIBXL_LIST_ENTRY(libxl__ao_cancellable) entry;
+    /*
+     * For nested aos:
+     *  Semantically, cancellation affects the whole tree of aos,
+     *    not just the parent.
+     *  libxl__ao_cancellable.ao refers to the child, so
+     *    that the child callback sees the right ao.  (After all,
+     *    it was code dealing with the child that set .ao.)
+     *  But, the cancellable is recorded on the "cancellables" list
+     *    for the ultimate root ao, so that every possible child
+     *    cancellation occurs as a result of the cancellation of the
+     *    parent.
+     *  We set ao->cancelling only in the root.
+     */
+};
+
+_hidden int libxl__ao_cancellable_register(libxl__ao_cancellable*);
+_hidden void libxl__ao_cancellable_deregister(libxl__ao_cancellable*);
+
+static inline void libxl__ao_cancellable_init
+  (libxl__ao_cancellable *c) { c->registered = 0; }
+static inline bool libxl__ao_cancellable_isregistered
+  (const libxl__ao_cancellable *c) { return c->registered; }
+
+
 typedef struct libxl__ev_time libxl__ev_time;
 typedef void libxl__ev_time_callback(libxl__egc *egc, libxl__ev_time *ev,
                                      const struct timeval *requested_abs,
@@ -362,6 +397,8 @@ struct libxl__ctx {
     LIBXL_LIST_HEAD(, libxl__ev_evtchn) evtchns_waiting;
     libxl__ev_fd evtchn_efd;
 
+    LIBXL_LIST_HEAD(, libxl__ao) aos_inprogress;
+
     LIBXL_TAILQ_HEAD(libxl__evgen_domain_death_list, libxl_evgen_domain_death)
         death_list /* sorted by domid */,
         death_reported;
@@ -448,12 +485,15 @@ struct libxl__ao {
      * only in libxl__ao_complete.)
      */
     uint32_t magic;
-    unsigned constructing:1, in_initiator:1, complete:1, notified:1;
+    unsigned constructing:1, in_initiator:1, complete:1, notified:1,
+        cancelling:1;
     int manip_refcnt;
     libxl__ao *nested_root;
     int nested_progeny;
     int progress_reports_outstanding;
     int rc;
+    LIBXL_LIST_HEAD(, libxl__ao_cancellable) cancellables;
+    LIBXL_LIST_ENTRY(libxl__ao) inprogress_entry;
     libxl__gc gc;
     libxl_asyncop_how how;
     libxl__poller *poller;

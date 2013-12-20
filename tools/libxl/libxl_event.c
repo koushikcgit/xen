@@ -1773,6 +1773,7 @@ void libxl__ao_abort(libxl__ao *ao)
     assert(ao->in_initiator);
     assert(!ao->complete);
     assert(!ao->progress_reports_outstanding);
+    assert(!ao->cancelling);
     libxl__ao__destroy(CTX, ao);
 }
 
@@ -1935,6 +1936,128 @@ int libxl__ao_inprogress(libxl__ao *ao,
     ao__manip_leave(CTX, ao);
 
     return rc;
+}
+
+
+/* cancellation */
+
+static int ao__cancel(libxl_ctx *ctx, libxl__ao *parent)
+/* Temporarily unlocks ctx, which must be locked exactly once on entry. */
+{
+    int rc;
+    ao__manip_enter(parent);
+
+    if (parent->cancelling) {
+        rc = ERROR_CANCELLED;
+        goto out;
+    }
+
+    parent->cancelling = 1;
+
+    if (LIBXL_LIST_EMPTY(&parent->cancellables)) {
+        LIBXL__LOG(ctx, XTL_DEBUG,
+                   "ao %p: cancellation requested, but not not implemented",
+                   parent);
+        rc = ERROR_NOTIMPLEMENTED;
+        goto out;
+    }
+
+    /* We keep calling cancellation hooks until there are none left */
+    while (!LIBXL_LIST_EMPTY(&parent->cancellables)) {
+        libxl__egc egc;
+        LIBXL_INIT_EGC(egc,ctx);
+
+        assert(!parent->complete);
+
+        libxl__ao_cancellable *canc = LIBXL_LIST_FIRST(&parent->cancellables);
+        assert(parent == ao_nested_root(canc->ao));
+
+        LIBXL_LIST_REMOVE(canc, entry);
+        canc->registered = 0;
+
+        LIBXL__LOG(ctx, XTL_DEBUG, "ao %p: canc=%p: cancelling",
+                   parent, canc->ao);
+        canc->callback(&egc, canc, ERROR_CANCELLED);
+
+        libxl__ctx_unlock(ctx);
+        libxl__egc_cleanup(&egc);
+        libxl__ctx_lock(ctx);
+    }
+
+    rc = 0;
+
+ out:
+    ao__manip_leave(ctx, parent);
+    return rc;
+}
+
+_hidden int libxl_ao_cancel(libxl_ctx *ctx, const libxl_asyncop_how *how)
+{
+    libxl__ao *search;
+    libxl__ctx_lock(ctx);
+    int rc;
+
+    LIBXL_LIST_FOREACH(search, &ctx->aos_inprogress, inprogress_entry) {
+        if (how) {
+            /* looking for ao to be reported by callback or event */
+            if (search->poller)
+                /* sync */
+                continue;
+            if (how->callback != search->how.callback)
+                continue;
+            if (how->callback
+                ? (how->u.for_callback != search->how.u.for_callback)
+                : (how->u.for_event != search->how.u.for_event))
+                continue;
+        } else {
+            /* looking for synchronous call */
+            if (!search->poller)
+                /* async */
+                continue;
+        }
+        goto found;
+    }
+    rc = ERROR_NOTFOUND;
+    goto out;
+
+ found:
+    rc = ao__cancel(ctx, search);
+ out:
+    libxl__ctx_unlock(ctx);
+    return rc;
+}
+
+int libxl__ao_cancellable_register(libxl__ao_cancellable *canc)
+{
+    libxl__ao *ao = canc->ao;
+    libxl__ao *root = ao_nested_root(ao);
+    AO_GC;
+
+    if (root->cancelling) {
+ DBG("ao=%p: preemptively cancelling cancellable registration %p (root=%p)",
+            ao, canc, root);
+        return ERROR_CANCELLED;
+    }
+
+    DBG("ao=%p, canc=%p: registering (root=%p)", ao, canc, root);
+    LIBXL_LIST_INSERT_HEAD(&root->cancellables, canc, entry);
+    canc->registered = 1;
+
+    return 0;
+}
+
+_hidden void libxl__ao_cancellable_deregister(libxl__ao_cancellable *canc)
+{
+    if (!canc->registered)
+        return;
+
+    libxl__ao *ao = canc->ao;
+    libxl__ao *root __attribute__((unused)) = ao_nested_root(ao);
+    AO_GC;
+
+    DBG("ao=%p, canc=%p: deregistering (root=%p)", ao, canc, root);
+    LIBXL_LIST_REMOVE(canc, entry);
+    canc->registered = 0;
 }
 
 
