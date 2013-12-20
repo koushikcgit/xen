@@ -1762,6 +1762,7 @@ void libxl__ao_complete(libxl__egc *egc, libxl__ao *ao, int rc)
     assert(ao->magic == LIBXL__AO_MAGIC);
     assert(!ao->complete);
     assert(!ao->nested_root);
+    assert(!ao->nested_progeny);
     ao->complete = 1;
     ao->rc = rc;
 
@@ -1972,6 +1973,8 @@ _hidden libxl__ao *libxl__nested_ao_create(libxl__ao *parent)
     child = libxl__zalloc(&ctx->nogc_gc, sizeof(*child));
     child->magic = LIBXL__AO_MAGIC;
     child->nested_root = root;
+    assert(root->nested_progeny < INT_MAX);
+    root->nested_progeny++;
     LIBXL_INIT_GC(child->gc, ctx);
     libxl__gc *gc = &child->gc;
 
@@ -1982,7 +1985,10 @@ _hidden libxl__ao *libxl__nested_ao_create(libxl__ao *parent)
 _hidden void libxl__nested_ao_free(libxl__ao *child)
 {
     assert(child->magic == LIBXL__AO_MAGIC);
-    assert(child->nested_root);
+    libxl__ao *root = child->nested_root;
+    assert(root);
+    assert(root->nested_progeny > 0);
+    root->nested_progeny--;
     libxl_ctx *ctx = libxl__gc_owner(&child->gc);
     libxl__ao__destroy(ctx, child);
 }
