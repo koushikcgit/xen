@@ -1262,7 +1262,7 @@ static void domcreate_complete(libxl__egc *egc,
     if (!rc && d_config->b_info.exec_ssidref)
         rc = xc_flask_relabel_domain(CTX->xch, dcs->guest_domid, d_config->b_info.exec_ssidref);
 
-    if (rc) {
+    if (rc && rc != ERROR_CANCELLED) {
         if (dcs->guest_domid) {
             dcs->dds.ao = ao;
             dcs->dds.domid = dcs->guest_domid;
