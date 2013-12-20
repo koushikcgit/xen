@@ -1446,7 +1446,9 @@ static void domcreate_complete(libxl__egc *egc,
     if (!rc && d_config->b_info.exec_ssidref)
         rc = xc_flask_relabel_domain(CTX->xch, dcs->guest_domid, d_config->b_info.exec_ssidref);
 
-    if (!rc) {
+    bool retain_domain = !rc || rc == ERROR_CANCELLED;
+
+    if (retain_domain) {
         libxl__domain_userdata_lock *lock;
 
         /* Note that we hold CTX lock at this point so only need to
@@ -1465,7 +1467,7 @@ static void domcreate_complete(libxl__egc *egc,
 
     libxl_domain_config_dispose(d_config_saved);
 
-    if (rc) {
+    if (!retain_domain) {
         if (dcs->guest_domid) {
             dcs->dds.ao = ao;
             dcs->dds.domid = dcs->guest_domid;
