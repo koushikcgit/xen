@@ -2025,10 +2025,10 @@ struct libxl__ao_device {
     libxl__multidev *multidev; /* reference to the containing multidev */
     /* private for add/remove implementation */
     libxl__ev_devstate backend_ds;
-    /* Bodge for Qemu devices, also used for timeout of hotplug execution */
+    /* Bodge for Qemu devices */
     libxl__ev_time timeout;
     /* xenstore watch for backend path of driver domains */
-    libxl__ev_xswatch xs_watch;
+    libxl__xswait_state xswait;
     /* device hotplug execution */
     const char *what;
     int num_exec;
