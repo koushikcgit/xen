@@ -172,7 +172,8 @@ struct libxl__ev_fd {
 
 typedef struct libxl__ev_time libxl__ev_time;
 typedef void libxl__ev_time_callback(libxl__egc *egc, libxl__ev_time *ev,
-                                     const struct timeval *requested_abs);
+                                     const struct timeval *requested_abs,
+                                     int rc); /* TIMEDOUT or CANCELLED */
 struct libxl__ev_time {
     /* caller should include this in their own struct */
     /* read-only for caller, who may read only when registered: */
@@ -734,10 +735,10 @@ static inline void libxl__ev_fd_init(libxl__ev_fd *efd)
 static inline int libxl__ev_fd_isregistered(const libxl__ev_fd *efd)
                     { return efd->fd >= 0; }
 
-_hidden int libxl__ev_time_register_rel(libxl__gc*, libxl__ev_time *ev_out,
+_hidden int libxl__ev_time_register_rel(libxl__ao*, libxl__ev_time *ev_out,
                                         libxl__ev_time_callback*,
                                         int milliseconds /* as for poll(2) */);
-_hidden int libxl__ev_time_register_abs(libxl__gc*, libxl__ev_time *ev_out,
+_hidden int libxl__ev_time_register_abs(libxl__ao*, libxl__ev_time *ev_out,
                                         libxl__ev_time_callback*,
                                         struct timeval);
 _hidden int libxl__ev_time_modify_rel(libxl__gc*, libxl__ev_time *ev,
@@ -1048,13 +1049,13 @@ typedef struct libxl__xswait_state libxl__xswait_state;
  *     Otherwise, xswait will continue waiting and watching and
  *     will call you back later.
  *
- * rc==ERROR_TIMEDOUT
+ * rc==ERROR_TIMEDOUT, rc==ERROR_CANCELLED
  *
  *     The specified timeout was reached.
  *     This has NOT been logged (except to the debug log).
  *     xswait will not continue (but calling libxl__xswait_stop is OK).
  *
- * rc!=0, !=ERROR_TIMEDOUT
+ * rc!=0, !=ERROR_TIMEDOUT, !=ERROR_CANCELLED
  *
  *     Some other error occurred.
  *     This HAS been logged.
@@ -1092,8 +1093,9 @@ int libxl__xswait_start(libxl__gc*, libxl__xswait_state*);
 typedef struct libxl__ev_devstate libxl__ev_devstate;
 typedef void libxl__ev_devstate_callback(libxl__egc *egc, libxl__ev_devstate*,
                                          int rc);
-  /* rc will be 0, ERROR_TIMEDOUT, ERROR_INVAL (meaning path was removed),
-   * or ERROR_FAIL if other stuff went wrong (in which latter case, logged) */
+  /* rc will be 0, ERROR_TIMEDOUT, ERROR_CANCELLED, ERROR_INVAL
+   * (meaning path was removed), or ERROR_FAIL if other stuff went
+   * wrong (in which latter case, logged) */
 
 struct libxl__ev_devstate {
     /* read-only for caller, who may read only when waiting: */

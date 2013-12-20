@@ -309,10 +309,11 @@ static void time_done_debug(libxl__gc *gc, const char *func,
 #endif
 }
 
-int libxl__ev_time_register_abs(libxl__gc *gc, libxl__ev_time *ev,
+int libxl__ev_time_register_abs(libxl__ao *ao, libxl__ev_time *ev,
                                 libxl__ev_time_callback *func,
                                 struct timeval absolute)
 {
+    AO_GC;
     int rc;
 
     CTX_LOCK;
@@ -333,10 +334,11 @@ int libxl__ev_time_register_abs(libxl__gc *gc, libxl__ev_time *ev,
 }
 
 
-int libxl__ev_time_register_rel(libxl__gc *gc, libxl__ev_time *ev,
+int libxl__ev_time_register_rel(libxl__ao *ao, libxl__ev_time *ev,
                                 libxl__ev_time_callback *func,
                                 int milliseconds /* as for poll(2) */)
 {
+    AO_GC;
     struct timeval absolute;
     int rc;
 
@@ -1154,7 +1156,7 @@ static void afterpoll_internal(libxl__egc *egc, libxl__poller *poller,
             etime, (unsigned long)etime->abs.tv_sec,
             (unsigned long)etime->abs.tv_usec);
 
-        etime->func(egc, etime, &etime->abs);
+        etime->func(egc, etime, &etime->abs, ERROR_TIMEDOUT);
     }
 }
 
@@ -1235,7 +1237,7 @@ void libxl_osevent_occurred_timeout(libxl_ctx *ctx, void *for_libxl)
     assert(!ev->infinite);
 
     LIBXL_TAILQ_REMOVE(&CTX->etimes, ev, entry);
-    ev->func(egc, ev, &ev->abs);
+    ev->func(egc, ev, &ev->abs, ERROR_TIMEDOUT);
 
  out:
     CTX_UNLOCK;

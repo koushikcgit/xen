@@ -771,7 +771,8 @@ static void remus_domain_suspend_callback_common_done(libxl__egc *egc,
  */
 
 static void switch_logdirty_timeout(libxl__egc *egc, libxl__ev_time *ev,
-                                    const struct timeval *requested_abs);
+                                    const struct timeval *requested_abs,
+                                    int rc);
 static void switch_logdirty_xswatch(libxl__egc *egc, libxl__ev_xswatch*,
                             const char *watch_path, const char *event_path);
 static void switch_logdirty_done(libxl__egc *egc,
@@ -808,7 +809,7 @@ static void domain_suspend_switch_qemu_xen_traditional_logdirty
                                 switch_logdirty_xswatch, lds->ret_path);
     if (rc) goto out;
 
-    rc = libxl__ev_time_register_rel(gc, &lds->timeout,
+    rc = libxl__ev_time_register_rel(ao, &lds->timeout,
                                 switch_logdirty_timeout, 10*1000);
     if (rc) goto out;
 
@@ -897,7 +898,8 @@ void libxl__domain_suspend_common_switch_qemu_logdirty
     }
 }
 static void switch_logdirty_timeout(libxl__egc *egc, libxl__ev_time *ev,
-                                    const struct timeval *requested_abs)
+                                    const struct timeval *requested_abs,
+                                    int rc)
 {
     libxl__domain_suspend_state *dss = CONTAINER_OF(ev, *dss, logdirty.timeout);
     STATE_AO_GC(dss->ao);
@@ -1046,7 +1048,7 @@ static void suspend_common_wait_guest_watch(libxl__egc *egc,
 static void suspend_common_wait_guest_check(libxl__egc *egc,
         libxl__domain_suspend_state *dss);
 static void suspend_common_wait_guest_timeout(libxl__egc *egc,
-      libxl__ev_time *ev, const struct timeval *requested_abs);
+      libxl__ev_time *ev, const struct timeval *requested_abs, int rc);
 
 static void domain_suspend_common_done(libxl__egc *egc,
                                        libxl__domain_suspend_state *dss,
@@ -1088,7 +1090,7 @@ static void domain_suspend_callback_common(libxl__egc *egc,
         rc = libxl__ev_evtchn_wait(gc, &dss->guest_evtchn);
         if (rc) goto err;
 
-        rc = libxl__ev_time_register_rel(gc, &dss->guest_timeout,
+        rc = libxl__ev_time_register_rel(ao, &dss->guest_timeout,
                                          suspend_common_wait_guest_timeout,
                                          60*1000);
         if (rc) goto err;
@@ -1218,7 +1220,7 @@ static void domain_suspend_common_wait_guest(libxl__egc *egc,
                                     "@releaseDomain");
     if (rc) goto err;
 
-    rc = libxl__ev_time_register_rel(gc, &dss->guest_timeout, 
+    rc = libxl__ev_time_register_rel(ao, &dss->guest_timeout, 
                                      suspend_common_wait_guest_timeout,
                                      60*1000);
     if (rc) goto err;
@@ -1279,12 +1281,15 @@ static void suspend_common_wait_guest_check(libxl__egc *egc,
 }
 
 static void suspend_common_wait_guest_timeout(libxl__egc *egc,
-      libxl__ev_time *ev, const struct timeval *requested_abs)
+      libxl__ev_time *ev, const struct timeval *requested_abs, int rc)
 {
     libxl__domain_suspend_state *dss = CONTAINER_OF(ev, *dss, guest_timeout);
     STATE_AO_GC(dss->ao);
-    LOG(ERROR, "guest did not suspend, timed out");
-    domain_suspend_common_done(egc, dss, ERROR_GUEST_TIMEDOUT);
+    if (rc == ERROR_TIMEDOUT) {
+        LOG(ERROR, "guest did not suspend, timed out");
+        rc = ERROR_GUEST_TIMEDOUT;
+    }
+    domain_suspend_common_done(egc, dss, rc);
 }
 
 static void domain_suspend_common_guest_suspended(libxl__egc *egc,

@@ -697,7 +697,7 @@ out:
 
 /* This callback is part of the Qemu devices Badge */
 static void device_qemu_timeout(libxl__egc *egc, libxl__ev_time *ev,
-                                const struct timeval *requested_abs);
+                                const struct timeval *requested_abs, int rc);
 
 static void device_backend_callback(libxl__egc *egc, libxl__ev_devstate *ds,
                                    int rc);
@@ -708,7 +708,8 @@ static void device_backend_cleanup(libxl__gc *gc,
 static void device_hotplug(libxl__egc *egc, libxl__ao_device *aodev);
 
 static void device_hotplug_timeout_cb(libxl__egc *egc, libxl__ev_time *ev,
-                                      const struct timeval *requested_abs);
+                                      const struct timeval *requested_abs,
+                                      int rc);
 
 static void device_hotplug_child_death_cb(libxl__egc *egc,
                                           libxl__ev_child *child,
@@ -790,7 +791,7 @@ void libxl__initiate_device_remove(libxl__egc *egc,
              * TODO: 4.2 Bodge due to QEMU, see comment on top of
              * libxl__initiate_device_remove in libxl_internal.h
              */
-            rc = libxl__ev_time_register_rel(gc, &aodev->timeout,
+            rc = libxl__ev_time_register_rel(ao, &aodev->timeout,
                                              device_qemu_timeout,
                                              LIBXL_QEMU_BODGE_TIMEOUT * 1000);
             if (rc) {
@@ -862,7 +863,7 @@ out:
 }
 
 static void device_qemu_timeout(libxl__egc *egc, libxl__ev_time *ev,
-                                const struct timeval *requested_abs)
+                                const struct timeval *requested_abs, int rc)
 {
     libxl__ao_device *aodev = CONTAINER_OF(ev, *aodev, timeout);
     STATE_AO_GC(aodev->ao);
@@ -870,7 +871,9 @@ static void device_qemu_timeout(libxl__egc *egc, libxl__ev_time *ev,
     char *state_path = GCSPRINTF("%s/state", be_path);
     const char *xs_state;
     xs_transaction_t t = 0;
-    int rc = 0;
+
+    if (rc != ERROR_TIMEDOUT)
+        goto out;
 
     libxl__ev_time_deregister(gc, &aodev->timeout);
 
@@ -998,7 +1001,7 @@ static void device_hotplug(libxl__egc *egc, libxl__ao_device *aodev)
     }
 
     /* Set hotplug timeout */
-    rc = libxl__ev_time_register_rel(gc, &aodev->timeout,
+    rc = libxl__ev_time_register_rel(ao, &aodev->timeout,
                                      device_hotplug_timeout_cb,
                                      LIBXL_HOTPLUG_TIMEOUT * 1000);
     if (rc) {
@@ -1035,10 +1038,14 @@ out:
 }
 
 static void device_hotplug_timeout_cb(libxl__egc *egc, libxl__ev_time *ev,
-                                      const struct timeval *requested_abs)
+                                      const struct timeval *requested_abs,
+                                      int rc)
 {
     libxl__ao_device *aodev = CONTAINER_OF(ev, *aodev, timeout);
     STATE_AO_GC(aodev->ao);
+
+    if (!aodev->rc)
+        aodev->rc = rc;
 
     libxl__ev_time_deregister(gc, &aodev->timeout);
 
@@ -1070,7 +1077,8 @@ static void device_hotplug_child_death_cb(libxl__egc *egc,
                                        GCSPRINTF("%s/hotplug-error", be_path));
         if (hotplug_error)
             LOG(ERROR, "script: %s", hotplug_error);
-        aodev->rc = ERROR_FAIL;
+        if (!aodev->rc)
+            aodev->rc = ERROR_FAIL;
         if (aodev->action == LIBXL__DEVICE_ACTION_ADD)
             /*
              * Only fail on device connection, on disconnection

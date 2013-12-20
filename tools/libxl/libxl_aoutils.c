@@ -46,7 +46,7 @@ int libxl__xswait_start(libxl__gc *gc, libxl__xswait_state *xswa)
 {
     int rc;
 
-    rc = libxl__ev_time_register_rel(gc, &xswa->time_ev,
+    rc = libxl__ev_time_register_rel(xswa->ao, &xswa->time_ev,
                                      xswait_timeout_callback, xswa->timeout_ms);
     if (rc) goto err;
 
@@ -76,12 +76,13 @@ void xswait_xswatch_callback(libxl__egc *egc, libxl__ev_xswatch *xsw,
 }
 
 void xswait_timeout_callback(libxl__egc *egc, libxl__ev_time *ev,
-                             const struct timeval *requested_abs)
+                             const struct timeval *requested_abs,
+                             int rc)
 {
     EGC_GC;
     libxl__xswait_state *xswa = CONTAINER_OF(ev, *xswa, time_ev);
     LOG(DEBUG, "%s: xswait timeout (path=%s)", xswa->what, xswa->path);
-    xswait_report_error(egc, xswa, ERROR_TIMEDOUT);
+    xswait_report_error(egc, xswa, rc);
 }
 
 static void xswait_report_error(libxl__egc *egc, libxl__xswait_state *xswa,
