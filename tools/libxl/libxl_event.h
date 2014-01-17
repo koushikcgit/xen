@@ -472,7 +472,7 @@ void libxl_osevent_occurred_timeout(libxl_ctx *ctx, void *for_libxl)
  *
  *       The application expects libxl to reap all of its children,
  *       and provides a callback to be notified of their exit
- *       statues.  The application must have only one libxl_ctx
+ *       statuses.  The application may have multiple libxl_ctxs
  *       configured this way.
  *
  *     libxl_sigchld_owner_libxl_always_selective_reap:
