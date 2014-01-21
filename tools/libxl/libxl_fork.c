@@ -51,6 +51,7 @@ static LIBXL_LIST_HEAD(, libxl__carefd) carefds =
  * asynchronously by the signal handler) by sigchld_defer (see
  * below). */
 static bool sigchld_installed; /* 0 means not */
+static pthread_mutex_t sigchld_defer_mutex = PTHREAD_MUTEX_INITIALIZER;
 static LIBXL_LIST_HEAD(, libxl_ctx) sigchld_users =
     LIBXL_LIST_HEAD_INITIALIZER(sigchld_users);
 static struct sigaction sigchld_saved_action;
@@ -188,10 +189,16 @@ static void sigchld_handler(int signo)
     libxl_ctx *notify;
     int esave = errno;
 
+    int r = pthread_mutex_lock(&sigchld_defer_mutex);
+    assert(!r);
+
     LIBXL_LIST_FOREACH(notify, &sigchld_users, sigchld_users_entry) {
         int e = libxl__self_pipe_wakeup(notify->sigchld_selfpipe[1]);
         assert(!e); /* errors are probably EBADF, very bad */
     }
+
+    r = pthread_mutex_unlock(&sigchld_defer_mutex);
+    assert(!r);
 
     errno = esave;
 }
@@ -221,8 +228,10 @@ static void sigchld_sethandler_raw(void (*handler)(int), struct sigaction *old)
  * must be reentrant (see the comment in release_sigchld).
  *
  * Callers have the atfork_lock so there is no risk of concurrency
- * within these functions, aside obviously from the risk of being
- * interrupted by the signal.
+ * within these functions, aside from the risk of being interrupted by
+ * the signal.  We use sigchld_defer_mutex to guard against the
+ * possibility of the real signal handler being still running on
+ * another thread.
  */
 
 static volatile sig_atomic_t sigchld_occurred_while_deferred;
@@ -235,12 +244,25 @@ static void sigchld_handler_when_deferred(int signo)
 static void defer_sigchld(void)
 {
     assert(sigchld_installed);
+
     sigchld_sethandler_raw(sigchld_handler_when_deferred, 0);
+
+    /* Now _this thread_ cannot any longer be interrupted by the
+     * signal, so we can take the mutex without risk of deadlock.  If
+     * another thread is in the signal handler, either it or we will
+     * block and wait for the other. */
+
+    int r = pthread_mutex_lock(&sigchld_defer_mutex);
+    assert(!r);
 }
 
 static void release_sigchld(void)
 {
     assert(sigchld_installed);
+
+    int r = pthread_mutex_unlock(&sigchld_defer_mutex);
+    assert(!r);
+
     sigchld_sethandler_raw(sigchld_handler, 0);
     if (sigchld_occurred_while_deferred) {
         sigchld_occurred_while_deferred = 0;
