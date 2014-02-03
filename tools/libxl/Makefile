@@ -79,7 +79,7 @@ LIBXL_OBJS = flexarray.o libxl.o libxl_create.o libxl_dm.o libxl_pci.o \
 			libxl_qmp.o libxl_event.o libxl_fork.o $(LIBXL_OBJS-y)
 LIBXL_OBJS += _libxl_types.o libxl_flask.o _libxl_types_internal.o
 
-LIBXL_TESTS +=
+LIBXL_TESTS += timedereg
 LIBXL_TEST_OBJS += $(foreach t, $(LIBXL_TESTS),libxl_test_$t.o)
 TEST_PROG_OBJS += $(foreach t, $(LIBXL_TESTS),test_$t.o) test_common.o
 TEST_PROGS += $(foreach t, $(LIBXL_TESTS),test_$t)
