@@ -2319,6 +2319,11 @@ case $host_os in *\ *) host_os=`echo "$host_os" | sed 's/ /-/g'`;; esac
 
 
 
+case $host_vendor in
+rumpxen) rump=true;;
+*)       rump=false;;
+esac
+
 ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
 ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
@@ -6750,6 +6755,8 @@ LDLFAGS=$ac_previous_ldflags
 
 fi
 
+if ! $rump; then
+
 # Extract the first word of "xgettext", so it can be a program name with args.
 set dummy xgettext; ac_word=$2
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
@@ -7619,6 +7626,7 @@ fi
 
 
 
+
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for io_setup in -laio" >&5
 $as_echo_n "checking for io_setup in -laio... " >&6; }
 if ${ac_cv_lib_aio_io_setup+:} false; then :
@@ -8198,6 +8206,8 @@ fi
 
 done
 
+
+fi
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
