@@ -27,7 +27,10 @@ LIBXENSTORE := libxenstore.a
 xenstore xenstore-control: CFLAGS += -static
 endif
 
-ALL_TARGETS = libxenstore.so libxenstore.a clients xs_tdb_dump xenstored
+ALL_TARGETS = libxenstore.a clients xs_tdb_dump xenstored
+ifneq ($(nosharedlibs),y)
+ALL_TARGETS += libxenstore.so
+endif
 
 ifeq ($(CONFIG_Linux),y)
 ALL_TARGETS += init-xenstore-domain
