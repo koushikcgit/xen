@@ -19,20 +19,22 @@ XEN_LIBVCHAN       = $(XEN_ROOT)/tools/libvchan
 
 CFLAGS_xeninclude = -I$(XEN_INCLUDE)
 
+libextension=.a
+
 CFLAGS_libxenctrl = -I$(XEN_LIBXC) $(CFLAGS_xeninclude)
-LDLIBS_libxenctrl = $(XEN_LIBXC)/libxenctrl.so
+LDLIBS_libxenctrl = $(XEN_LIBXC)/libxenctrl$(libextension)
 SHLIB_libxenctrl  = -Wl,-rpath-link=$(XEN_LIBXC)
 
 CFLAGS_libxenguest = -I$(XEN_LIBXC) $(CFLAGS_xeninclude)
-LDLIBS_libxenguest = $(XEN_LIBXC)/libxenguest.so
+LDLIBS_libxenguest = $(XEN_LIBXC)/libxenguest$(libextension)
 SHLIB_libxenguest  = -Wl,-rpath-link=L$(XEN_LIBXC)
 
 CFLAGS_libxenstore = -I$(XEN_XENSTORE) $(CFLAGS_xeninclude)
-LDLIBS_libxenstore = $(XEN_XENSTORE)/libxenstore.so
+LDLIBS_libxenstore = $(XEN_XENSTORE)/libxenstore$(libextension)
 SHLIB_libxenstore  = -Wl,-rpath-link=$(XEN_XENSTORE)
 
 CFLAGS_libxenstat  = -I$(XEN_LIBXENSTAT)
-LDLIBS_libxenstat  = $(SHLIB_libxenctrl) $(SHLIB_libxenstore) $(XEN_LIBXENSTAT)/libxenstat.so
+LDLIBS_libxenstat  = $(SHLIB_libxenctrl) $(SHLIB_libxenstore) $(XEN_LIBXENSTAT)/libxenstat$(libextension)
 SHLIB_libxenstat  = -Wl,-rpath-link=$(XEN_LIBXENSTAT)
 
 CFLAGS_libxenvchan = -I$(XEN_LIBVCHAN)
