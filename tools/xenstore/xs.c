@@ -185,7 +185,6 @@ static int get_socket(const char *connect_to)
 	struct sockaddr_un addr;
 	int sock, saved_errno, flags;
 
-fprintf(stderr,"get_socket %s\n",connect_to);
 	sock = socket(PF_UNIX, SOCK_STREAM, 0);
 	if (sock < 0)
 		return -1;
@@ -218,7 +217,6 @@ error:
 static int get_dev(const char *connect_to)
 {
 	/* We cannot open read-only because requests are writes */
-fprintf(stderr,"get_dev %s\n",connect_to);
 	return open(connect_to, O_RDWR);
 }
 
@@ -291,7 +289,6 @@ struct xs_handle *xs_open(unsigned long flags)
 {
 	struct xs_handle *xsh = NULL;
 
-fprintf(stderr,"in xs_open...");
 	if (flags & XS_OPEN_READONLY)
 		xsh = get_handle(xs_daemon_socket_ro());
 	else
