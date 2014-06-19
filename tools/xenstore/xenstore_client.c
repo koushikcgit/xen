@@ -281,6 +281,11 @@ do_watch(struct xs_handle *xsh, int max_events)
 
 	printf("%s\n", vec[XS_WATCH_PATH]);
 	fflush(stdout);
+
+if (strcmp(vec[XS_WATCH_PATH],vec[XS_WATCH_TOKEN]))
+ if (!xs_unwatch(xsh, vec[XS_WATCH_TOKEN], vec[XS_WATCH_TOKEN]))
+     errx(1, "Unable to remove watch on %s\n", vec[XS_WATCH_TOKEN]);
+
 	free(vec);
     }
 }
@@ -632,6 +637,7 @@ main(int argc, char **argv)
 	    max_width = ws.ws_col - 2;
     }
 
+fprintf(stderr,"xs_open...\n");
     xsh = xs_open(socket ? XS_OPEN_SOCKETONLY : 0);
     if (xsh == NULL) err(1, "xs_open");
 
