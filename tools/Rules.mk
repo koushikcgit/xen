@@ -29,6 +29,8 @@ INSTALL_SHLIB = : install-shlib
 SYMLINK_SHLIB = : symlink-shlib
 endif
 
+XENSTORE_XENSTORED ?= y
+
 CFLAGS_libxenctrl = -I$(XEN_LIBXC) $(CFLAGS_xeninclude)
 LDLIBS_libxenctrl = $(XEN_LIBXC)/libxenctrl$(libextension)
 SHLIB_libxenctrl  = -Wl,-rpath-link=$(XEN_LIBXC)

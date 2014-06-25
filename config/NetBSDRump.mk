@@ -9,3 +9,4 @@ WGET = ftp
 
 nosharedlibs=y
 XENSTORE_STATIC_CLIENTS=y
+XENSTORE_XENSTORED=n
