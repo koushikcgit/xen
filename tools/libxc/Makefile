@@ -109,16 +109,16 @@ OSDEP_LIB_OBJS := $(patsubst %.c,%.o,$(OSDEP_SRCS-y))
 OSDEP_PIC_OBJS := $(patsubst %.c,%.opic,$(OSDEP_SRCS-y))
 
 LIB := libxenctrl.a
-ifneq ($(stubdom),y)
+ifneq ($(nosharedlibs),y)
 LIB += libxenctrl.so libxenctrl.so.$(MAJOR) libxenctrl.so.$(MAJOR).$(MINOR)
 endif
 
 LIB += libxenguest.a
-ifneq ($(stubdom),y)
+ifneq ($(nosharedlibs),y)
 LIB += libxenguest.so libxenguest.so.$(MAJOR) libxenguest.so.$(MAJOR).$(MINOR)
 endif
 
-ifneq ($(stubdom),y)
+ifneq ($(nosharedlibs),y)
 LIB += xenctrl_osdep_ENOSYS.so
 endif
 
