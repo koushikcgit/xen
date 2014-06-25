@@ -21,9 +21,10 @@ APPEND_INCLUDES and APPEND_LIB instead when possible.])
 AC_CANONICAL_HOST
 
 case $host_vendor in
-rumpxen) rump=true;;
-*)       rump=false;;
+rumpxen) CONFIG_RUMP=y; rump=true;;
+*)       CONFIG_RUMP=n; rump=false;;
 esac
+AC_SUBST(CONFIG_RUMP)
 
 AC_SYS_LARGEFILE
 
