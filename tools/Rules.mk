@@ -19,7 +19,7 @@ XEN_LIBVCHAN       = $(XEN_ROOT)/tools/libvchan
 
 CFLAGS_xeninclude = -I$(XEN_INCLUDE)
 
-libextension=.a
+libextension ?= .so
 
 ifneq ($(nosharedlibs),y)
 INSTALL_SHLIB = $(INSTALL_PROG)
