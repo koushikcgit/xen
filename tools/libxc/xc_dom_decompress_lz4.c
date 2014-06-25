@@ -1,9 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <inttypes.h>
-#include "../../xen/common/endian-byteswap.h"
 #include <stdint.h>
 
+#include "../../xen/common/endian-byteswap.h"
 #include "xg_private.h"
 #include "xc_dom_decompress.h"
 
