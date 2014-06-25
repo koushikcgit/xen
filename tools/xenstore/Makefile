@@ -125,7 +125,7 @@ install: all
 		ln -f $(DESTDIR)$(BINDIR)/xenstore $(DESTDIR)$(BINDIR)/$${c} ; \
 	done
 	$(INSTALL_DIR) $(DESTDIR)$(LIBDIR)
-	$(INSTALL_PROG) libxenstore.so.$(MAJOR).$(MINOR) $(DESTDIR)$(LIBDIR)
+	$(INSTALL_SHLIB) libxenstore.so.$(MAJOR).$(MINOR) $(DESTDIR)$(LIBDIR)
 	ln -sf libxenstore.so.$(MAJOR).$(MINOR) $(DESTDIR)$(LIBDIR)/libxenstore.so.$(MAJOR)
 	ln -sf libxenstore.so.$(MAJOR) $(DESTDIR)$(LIBDIR)/libxenstore.so
 	$(INSTALL_DATA) libxenstore.a $(DESTDIR)$(LIBDIR)
