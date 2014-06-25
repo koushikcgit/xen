@@ -705,8 +705,8 @@ ac_ct_CC
 CPPFLAGS
 LDFLAGS
 CFLAGS
-CC
 CONFIG_RUMP
+CC
 host_os
 host_vendor
 host_cpu
@@ -2321,8 +2321,14 @@ case $host_os in *\ *) host_os=`echo "$host_os" | sed 's/ /-/g'`;; esac
 
 
 case $host_vendor in
-rumpxen) CONFIG_RUMP=y; rump=true;;
-*)       CONFIG_RUMP=n; rump=false;;
+rumpxen)
+        CONFIG_RUMP=y
+        rump=true
+
+        ;;
+*)      CONFIG_RUMP=n
+        rump=false
+        ;;
 esac
 
 
