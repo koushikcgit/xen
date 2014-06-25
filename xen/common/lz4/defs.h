@@ -8,6 +8,22 @@
  * published by the Free Software Foundation.
  */
 
+#ifdef __NetBSD__
+
+#include <sys/endian.h>
+
+static inline u16 INIT get_unaligned_le16(const void *p)
+{
+	return le16dec(p);
+}
+
+static inline u32 INIT get_unaligned_le32(void *p)
+{
+	return le32dec(p);
+}
+
+#else /* !__NetBSD__ */
+
 #ifdef __XEN__
 #include <asm/byteorder.h>
 #endif
@@ -35,6 +51,8 @@ static inline u32 INIT get_unaligned_le32(void *p)
 	return le32_to_cpu(__get_unaligned(p, 4));
 }
 #endif
+
+#endif /* !__NetBSD__ */
 
 /*
  * Detects 64 bits mode
