@@ -1,4 +1,4 @@
-#if !(defined(__MINIOS__) || defined(__RUMPUSER_XEN__))
+#ifndef __MINIOS__
 # include "xc_dom.h"
 #else
 # include "xc_dom_decompress_unsafe.h"

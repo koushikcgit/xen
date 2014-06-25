@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <inttypes.h>
+#include "../../xen/common/endian-byteswap.h"
 #include <stdint.h>
 
 #include "xg_private.h"
@@ -29,9 +30,8 @@ static inline uint_fast32_t le32_to_cpup(const unsigned char *buf)
 #include "../../xen/include/xen/lz4.h"
 #include "../../xen/common/decompress.h"
 
-#if !(defined(__MINIOS__) || defined(__RUMPUSER_XEN__))
+#ifndef __MINIOS__
 
-#include "../../xen/common/endian-byteswap.h"
 #include "../../xen/common/lz4/decompress.c"
 
 #define ARCHIVE_MAGICNUMBER 0x184C2102
@@ -124,7 +124,7 @@ exit_0:
 	return ret;
 }
 
-#else /* __MINIOS__ or __RUMPUSER_XEN__ */
+#else /* __MINIOS__ */
 
 #include "../../xen/common/unlz4.c"
 
