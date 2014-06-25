@@ -32,9 +32,6 @@ XEN_OS              ?= $(shell uname -s)
 
 CONFIG_$(XEN_OS) := y
 
-CONFIG_NO_NetBSDRump := y
-CONFIG_NO_$(XEN_OS) := n
-
 SHELL     ?= /bin/sh
 
 # Tools to run on system hosting the build

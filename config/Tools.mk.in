@@ -1,8 +1,6 @@
 CONFIG_RUMP         := @CONFIG_RUMP@
 ifeq ($(CONFIG_RUMP),y)
 XEN_OS              := NetBSDRump
-CONFIG_XCUTILS      := n
-CONFIG_FIRMWARE     := n
 endif
 
 # Prefix and install folder
