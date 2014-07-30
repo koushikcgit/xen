@@ -42,8 +42,6 @@
 
 #include <xenstore.h>
 #include <xen/sys/evtchn.h>
-#include <xen/sys/gntalloc.h>
-#include <xen/sys/gntdev.h>
 #include <libxenvchan.h>
 
 #ifndef PAGE_SHIFT

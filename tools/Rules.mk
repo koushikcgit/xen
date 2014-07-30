@@ -51,8 +51,8 @@ LDLIBS_libxenstat  = $(SHLIB_libxenctrl) $(SHLIB_libxenstore) $(XEN_LIBXENSTAT)/
 SHLIB_libxenstat  = -Wl,-rpath-link=$(XEN_LIBXENSTAT)
 
 CFLAGS_libxenvchan = -I$(XEN_LIBVCHAN)
-LDLIBS_libxenvchan = $(SHLIB_libxenctrl) $(SHLIB_libxenstore) -L$(XEN_LIBVCHAN) -lxenvchan
-SHLIB_libxenvchan  = -Wl,-rpath-link=$(XEN_LIBVCHAN)
+LDLIBS_libxenvchan = -L$(XEN_LIBVCHAN) -lxenvchan $(LDLIBS_libxenctrl) $(LDLIBS_libxenstore)
+SHLIB_libxenvchan  = $(SHLIB_libxenctrl) $(SHLIB_libxenstore) -Wl,-rpath-link=$(XEN_LIBVCHAN)
 
 ifeq ($(CONFIG_Linux),y)
 LIBXL_BLKTAP ?= y

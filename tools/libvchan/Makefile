@@ -20,7 +20,7 @@ MINOR = 0
 CFLAGS += -I../include -I.
 
 .PHONY: all
-all: libxenvchan.so vchan-node1 vchan-node2 libxenvchan.a
+all: libxenvchan$(libextension) vchan-node1 vchan-node2 libxenvchan.a
 
 libxenvchan.so: libxenvchan.so.$(MAJOR)
 	ln -sf $< $@
@@ -34,10 +34,10 @@ libxenvchan.so.$(MAJOR).$(MINOR): $(LIBVCHAN_PIC_OBJS)
 libxenvchan.a: $(LIBVCHAN_OBJS)
 	$(AR) rcs libxenvchan.a $^
 
-vchan-node1: $(NODE_OBJS) libxenvchan.so
+vchan-node1: $(NODE_OBJS) libxenvchan$(libextension)
 	$(CC) $(LDFLAGS) -o $@ $(NODE_OBJS) $(LDLIBS_libxenvchan) $(APPEND_LDFLAGS)
 
-vchan-node2: $(NODE2_OBJS) libxenvchan.so
+vchan-node2: $(NODE2_OBJS) libxenvchan$(libextension)
 	$(CC) $(LDFLAGS) -o $@ $(NODE2_OBJS) $(LDLIBS_libxenvchan) $(APPEND_LDFLAGS)
 
 .PHONY: install
