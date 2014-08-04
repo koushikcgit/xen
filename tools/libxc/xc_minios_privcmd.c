@@ -191,12 +191,14 @@ struct xc_osdep_ops xc_privcmd_ops = {
     },
 };
 
+#define GNTMAP(h) (files[(int)(h)].gntmap)
+
 static xc_osdep_handle minios_gnttab_open(xc_gnttab *xcg)
 {
     int fd = alloc_fd(FTYPE_GNTMAP);
     if ( fd == -1 )
         return XC_OSDEP_OPEN_ERROR;
-    gntmap_init(&files[fd].gntmap);
+    gntmap_init(&GNTMAP(h));
     return (xc_osdep_handle)fd;
 }
 
@@ -208,7 +210,7 @@ static int minios_gnttab_close(xc_gnttab *xcg, xc_osdep_handle h)
 
 void minios_gnttab_close_fd(int fd)
 {
-    gntmap_fini(&files[fd].gntmap);
+    gntmap_fini(&GNTMAP(h));
     files[fd].type = FTYPE_NONE;
 }
 
@@ -218,7 +220,6 @@ static void *minios_gnttab_grant_map(xc_gnttab *xcg, xc_osdep_handle h,
                                      uint32_t notify_offset,
                                      evtchn_port_t notify_port)
 {
-    int fd = (int)h;
     int stride = 1;
     if (flags & XC_GRANT_MAP_SINGLE_DOMAIN)
         stride = 0;
@@ -226,7 +227,7 @@ static void *minios_gnttab_grant_map(xc_gnttab *xcg, xc_osdep_handle h,
         errno = ENOSYS;
         return NULL;
     }
-    return gntmap_map_grant_refs(&files[fd].gntmap,
+    return gntmap_map_grant_refs(&GNTMAP(h),
                                  count, domids, stride,
                                  refs, prot & PROT_WRITE);
 }
@@ -235,9 +236,8 @@ static int minios_gnttab_munmap(xc_gnttab *xcg, xc_osdep_handle h,
                                 void *start_address,
                                 uint32_t count)
 {
-    int fd = (int)h;
     int ret;
-    ret = gntmap_munmap(&files[fd].gntmap,
+    ret = gntmap_munmap(&GNTMAP(h),
                         (unsigned long) start_address,
                         count);
     if (ret < 0) {
@@ -250,9 +250,8 @@ static int minios_gnttab_munmap(xc_gnttab *xcg, xc_osdep_handle h,
 static int minios_gnttab_set_max_grants(xc_gnttab *xcg, xc_osdep_handle h,
                              uint32_t count)
 {
-    int fd = (int)h;
     int ret;
-    ret = gntmap_set_max_grants(&files[fd].gntmap,
+    ret = gntmap_set_max_grants(&GNTMAP(h),
                                 count);
     if (ret < 0) {
         errno = -ret;
