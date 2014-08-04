@@ -41,6 +41,19 @@
 
 #include "xc_private.h"
 
+#ifdef __RUMPUSER_XEN__
+
+static xc_osdep_handle minios_privcmd_open(xc_interface *xch)
+{
+    return 1;
+}
+static int minios_privcmd_close(xc_interface *xch, xc_osdep_handle h)
+{
+    return 0;
+}
+
+#else /* !__RUMPUSER_XEN__ */
+
 void minios_interface_close_fd(int fd);
 void minios_gnttab_close_fd(int fd);
 
@@ -64,6 +77,8 @@ void minios_interface_close_fd(int fd)
 {
     files[fd].type = FTYPE_NONE;
 }
+
+#endif /* !__RUMPUSER_XEN__ */
 
 static void *minios_privcmd_alloc_hypercall_buffer(xc_interface *xch, xc_osdep_handle h, int npages)
 {
@@ -191,6 +206,24 @@ struct xc_osdep_ops xc_privcmd_ops = {
     },
 };
 
+#ifdef __RUMPUSER_XEN__
+
+static struct gntmap static_gntmap;
+
+#define GNTMAP(h) static_gntmap
+
+static xc_osdep_handle minios_gnttab_open(xc_gnttab *xcg)
+{
+    return 1;
+}
+
+static int minios_gnttab_close(xc_gnttab *xcg, xc_osdep_handle h)
+{
+    return 0;
+}
+
+#else /* !__RUMPUSER_XEN__ */
+
 #define GNTMAP(h) (files[(int)(h)].gntmap)
 
 static xc_osdep_handle minios_gnttab_open(xc_gnttab *xcg)
@@ -213,6 +246,8 @@ void minios_gnttab_close_fd(int fd)
     gntmap_fini(&GNTMAP(h));
     files[fd].type = FTYPE_NONE;
 }
+
+#endif /* !__RUMPUSER_XEN__ */
 
 static void *minios_gnttab_grant_map(xc_gnttab *xcg, xc_osdep_handle h,
                                      uint32_t count, int flags, int prot,
