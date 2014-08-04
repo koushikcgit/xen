@@ -38,7 +38,7 @@ CTRL_SRCS-$(CONFIG_X86) += xc_pagetab.c
 CTRL_SRCS-$(CONFIG_Linux) += xc_linux.c xc_linux_osdep.c
 CTRL_SRCS-$(CONFIG_FreeBSD) += xc_freebsd.c xc_freebsd_osdep.c
 CTRL_SRCS-$(CONFIG_SunOS) += xc_solaris.c
-CTRL_SRCS-$(CONFIG_NetBSD) += xc_netbsd.c
+CTRL_SRCS-$(CONFIG_NetBSD) += xc_netbsd.c xc_netbsd_user.c
 CTRL_SRCS-$(CONFIG_MiniOS) += xc_minios.c xc_minios_privcmd.c
 
 GUEST_SRCS-y :=
