@@ -261,6 +261,7 @@ static void spawn_watch_event(libxl__egc *egc, libxl__xswait_state *xswa,
                               int rc, const char *xsdata);
 static void spawn_middle_death(libxl__egc *egc, libxl__ev_child *childw,
                                pid_t pid, int status);
+static void spawn_cancel(libxl__egc *egc, libxl__ao_cancellable *, int rc);
 
 /* Precondition: Partial.  Results: Idle. */
 static void spawn_cleanup(libxl__gc *gc, libxl__spawn_state *ss);
@@ -273,6 +274,7 @@ void libxl__spawn_init(libxl__spawn_state *ss)
 {
     libxl__ev_child_init(&ss->mid);
     libxl__xswait_init(&ss->xswait);
+    libxl__ao_cancellable_init(&ss->cancel);
 }
 
 int libxl__spawn_spawn(libxl__egc *egc, libxl__spawn_state *ss)
@@ -284,6 +286,10 @@ int libxl__spawn_spawn(libxl__egc *egc, libxl__spawn_state *ss)
 
     libxl__spawn_init(ss);
     ss->failed = ss->detaching = 0;
+
+    ss->cancel.ao = ao;
+    ss->cancel.callback = spawn_cancel;
+    rc = libxl__ao_cancellable_register(&ss->cancel);
 
     ss->xswait.ao = ao;
     ss->xswait.what = GCSPRINTF("%s startup", ss->what);
@@ -347,6 +353,7 @@ int libxl__spawn_spawn(libxl__egc *egc, libxl__spawn_state *ss)
 static void spawn_cleanup(libxl__gc *gc, libxl__spawn_state *ss)
 {
     assert(!libxl__ev_child_inuse(&ss->mid));
+    libxl__ao_cancellable_deregister(&ss->cancel);
     libxl__xswait_stop(gc, &ss->xswait);
 }
 
@@ -380,6 +387,16 @@ static void spawn_fail(libxl__egc *egc, libxl__spawn_state *ss)
     EGC_GC;
     ss->failed = 1;
     spawn_detach(gc, ss);
+}
+
+static void spawn_cancel(libxl__egc *egc, libxl__ao_cancellable *cancel,
+                         int rc)
+{
+    EGC_GC;
+    libxl__spawn_state *ss = CONTAINER_OF(cancel, *ss, cancel);
+
+    LOG(NOTICE, "%s: spawn cancelled", ss->what);
+    spawn_fail(egc, ss);
 }
 
 static void spawn_watch_event(libxl__egc *egc, libxl__xswait_state *xswa,
