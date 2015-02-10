@@ -2594,6 +2594,7 @@ struct libxl__datacopier_state {
     libxl__datacopier_callback *callback;
     libxl__datacopier_callback *callback_pollhup;
     /* remaining fields are private to datacopier */
+    libxl__ao_cancellable cancel;
     libxl__ev_fd toread, towrite;
     ssize_t used;
     LIBXL_TAILQ_HEAD(libxl__datacopier_bufs, libxl__datacopier_buf) bufs;
