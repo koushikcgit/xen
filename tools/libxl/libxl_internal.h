@@ -3226,6 +3226,9 @@ _hidden const char *libxl__device_model_savefile(libxl__gc *gc, uint32_t domid);
     })
 
 
+#define FILLZERO LIBXL_FILLZERO
+
+
 /*
  * All of these assume (or define)
  *    libxl__gc *gc;
