@@ -2089,7 +2089,15 @@ _hidden const char *libxl__run_dir_path(void);
 typedef struct libxl__async_exec_state libxl__async_exec_state;
 
 typedef void libxl__async_exec_callback(libxl__egc *egc,
-                        libxl__async_exec_state *aes, int status);
+                        libxl__async_exec_state *aes, int rc, int status);
+/*
+ * Meaning of status and rc:
+ *  rc==0, status==0    all went well
+ *  rc==0, status!=0    everything OK except child exited nonzero (logged)
+ *  rc!=0               something else went wrong (status is real
+ *                       exit status, maybe reflecting SIGKILL if aes
+ *                       code killed the child).  Logged unless CANCELLED.
+ */
 
 struct libxl__async_exec_state {
     /* caller must fill these in */
@@ -2105,6 +2113,7 @@ struct libxl__async_exec_state {
     /* private */
     libxl__ev_time time;
     libxl__ev_child child;
+    int rc;
 };
 
 void libxl__async_exec_init(libxl__async_exec_state *aes);
