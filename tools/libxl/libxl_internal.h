@@ -207,6 +207,8 @@ static inline void libxl__ao_cancellable_init
 static inline bool libxl__ao_cancellable_isregistered
   (const libxl__ao_cancellable *c) { return c->registered; }
 
+int libxl__ao_cancelling(libxl__ao *ao); /* -> 0 or ERROR_CANCELLED */
+
 
 typedef struct libxl__ev_time libxl__ev_time;
 typedef void libxl__ev_time_callback(libxl__egc *egc, libxl__ev_time *ev,

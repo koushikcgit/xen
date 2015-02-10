@@ -2028,6 +2028,17 @@ _hidden int libxl_ao_cancel(libxl_ctx *ctx, const libxl_asyncop_how *how)
     return rc;
 }
 
+int libxl__ao_cancelling(libxl__ao *ao)
+{
+    libxl__ao *root = ao_nested_root(ao);
+    if (root->cancelling) {
+        DBG("ao=%p: cancelling at explicit check (root=%p)", ao, root);
+        return ERROR_CANCELLED;
+    }
+
+    return 0;
+}
+
 int libxl__ao_cancellable_register(libxl__ao_cancellable *canc)
 {
     libxl__ao *ao = canc->ao;
