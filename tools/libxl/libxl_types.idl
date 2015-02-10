@@ -66,6 +66,7 @@ libxl_error = Enumeration("error", [
     (-20, "CANCELLED"),
     (-21, "NOTFOUND"),
     (-22, "NOTIMPLEMENTED"),
+    (-23, "DOMAIN_DESTROYED"),
     ], value_namespace = "")
 
 libxl_domain_type = Enumeration("domain_type", [
