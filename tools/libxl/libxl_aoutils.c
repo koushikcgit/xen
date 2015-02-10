@@ -103,6 +103,7 @@ static void xswait_report_error(libxl__egc *egc, libxl__xswait_state *xswa,
 void libxl__datacopier_init(libxl__datacopier_state *dc)
 {
     assert(dc->ao);
+    libxl__ao_cancellable_init(&dc->cancel);
     libxl__ev_fd_init(&dc->toread);
     libxl__ev_fd_init(&dc->towrite);
     LIBXL_TAILQ_INIT(&dc->bufs);
@@ -113,6 +114,7 @@ void libxl__datacopier_kill(libxl__datacopier_state *dc)
     STATE_AO_GC(dc->ao);
     libxl__datacopier_buf *buf, *tbuf;
 
+    libxl__ao_cancellable_deregister(&dc->cancel);
     libxl__ev_fd_deregister(gc, &dc->toread);
     libxl__ev_fd_deregister(gc, &dc->towrite);
     LIBXL_TAILQ_FOREACH_SAFE(buf, &dc->bufs, entry, tbuf)
@@ -194,6 +196,15 @@ static int datacopier_pollhup_handled(libxl__egc *egc,
         return 1;
     }
     return 0;
+}
+
+static void datacopier_cancel(libxl__egc *egc, libxl__ao_cancellable *cancel,
+                              int rc)
+{
+    libxl__datacopier_state *dc = CONTAINER_OF(cancel, *dc, cancel);
+    STATE_AO_GC(dc->ao);
+
+    datacopier_callback(egc, dc, rc, -1, 0);
 }
 
 static void datacopier_readable(libxl__egc *egc, libxl__ev_fd *ev,
@@ -311,6 +322,11 @@ int libxl__datacopier_start(libxl__datacopier_state *dc)
     STATE_AO_GC(dc->ao);
 
     libxl__datacopier_init(dc);
+
+    dc->cancel.ao = ao;
+    dc->cancel.callback = datacopier_cancel;
+    rc = libxl__ao_cancellable_register(&dc->cancel);
+    if (rc) goto out;
 
     rc = libxl__ev_fd_register(gc, &dc->toread, datacopier_readable,
                                dc->readfd, POLLIN);
