@@ -1671,6 +1671,9 @@ static void devices_destroy_cb(libxl__egc *egc,
     }
     libxl__userdata_destroyall(gc, domid);
 
+    libxl__unlock_domain_userdata(lock);
+    lock = 0;
+
     rc = xc_domain_destroy(ctx->xch, domid);
     if (rc < 0) {
         LIBXL__LOG_ERRNOVAL(ctx, LIBXL__LOG_ERROR, rc, "xc_domain_destroy failed for %d", domid);
