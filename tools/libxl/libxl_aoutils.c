@@ -208,7 +208,7 @@ static void datacopier_readable(libxl__egc *egc, libxl__ev_fd *ev,
     if (datacopier_pollhup_handled(egc, dc, revents, 0))
         return;
 
-    if (revents & ~POLLIN) {
+    if (revents & ~POLLIN && revents != (POLLIN|POLLHUP)) {
         LOG(ERROR, "unexpected poll event 0x%x (should be POLLIN)"
             " on %s during copy of %s", revents, dc->readwhat, dc->copywhat);
         datacopier_callback(egc, dc, -1, 0);
