@@ -99,7 +99,7 @@ LIBXL_OBJS = flexarray.o libxl.o libxl_create.o libxl_dm.o libxl_pci.o \
 LIBXL_OBJS += libxl_genid.o
 LIBXL_OBJS += _libxl_types.o libxl_flask.o _libxl_types_internal.o
 
-LIBXL_TESTS += timedereg
+LIBXL_TESTS += timedereg asynctaskcanc
 # Each entry FOO in LIBXL_TESTS has two main .c files:
 #   libxl_test_FOO.c  "inside libxl" code to support the test case
 #   test_FOO.c        "outside libxl" code to exercise the test case
@@ -242,7 +242,7 @@ xen-init-dom0: $(XEN_INIT_DOM0_OBJS) libxenlight.so
 	$(CC) $(LDFLAGS) -o $@ $(XEN_INIT_DOM0_OBJS) $(LDLIBS_libxenstore) $(LDLIBS_libxenlight) $(LDLIBS_libxenctrl) $(APPEND_LDFLAGS)
 
 test_%: test_%.o test_common.o libxlutil.so libxenlight_test.so
-	$(CC) $(LDFLAGS) -o $@ $^ $(filter-out %libxenlight.so, $(LDLIBS_libxenlight)) $(LDLIBS_libxenctrl) -lyajl $(APPEND_LDFLAGS)
+	$(CC) $(LDFLAGS) -o $@ $^ $(LDLIBS_libxenlight) $(LDLIBS_libxenctrl) -lyajl $(APPEND_LDFLAGS)
 
 libxl-save-helper: $(SAVE_HELPER_OBJS) libxenlight.so
 	$(CC) $(LDFLAGS) -o $@ $(SAVE_HELPER_OBJS) $(LDLIBS_libxenctrl) $(LDLIBS_libxenguest) $(APPEND_LDFLAGS)
@@ -280,7 +280,7 @@ install: all
 
 .PHONY: clean
 clean:
-	$(RM) -f _*.h *.o *.so* *.a $(CLIENTS) $(DEPS)
+	$(RM) -f _*.h *.o *.so* *.a $(CLIENTS) $(DEPS) $(TEST_PROGS)
 	$(RM) -f _*.c *.pyc _paths.*.tmp _*.api-for-check
 	$(RM) -f testidl.c.new testidl.c *.api-ok
 	$(RM) -f xenlight.pc

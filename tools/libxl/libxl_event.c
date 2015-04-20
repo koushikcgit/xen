@@ -1844,7 +1844,6 @@ void libxl__ao_abort(libxl__ao *ao)
     assert(!ao->complete);
     assert(!ao->progress_reports_outstanding);
     assert(!ao->cancelling);
-    LIBXL_LIST_REMOVE(ao, inprogress_entry);
     libxl__ao__destroy(CTX, ao);
 }
 
@@ -1865,7 +1864,7 @@ void libxl__ao_complete(libxl__egc *egc, libxl__ao *ao, int rc)
     assert(!ao->nested_progeny);
     ao->complete = 1;
     ao->rc = rc;
-    LIBXL_LIST_REMOVE(ao, inprogress_entry);
+
     libxl__ao_complete_check_progress_reports(egc, ao);
 }
 
@@ -1937,8 +1936,6 @@ libxl__ao *libxl__ao_create(libxl_ctx *ctx, uint32_t domid,
     libxl__log(ctx,XTL_DEBUG,-1,file,line,func,
                "ao %p: create: how=%p callback=%p poller=%p",
                ao, how, ao->how.callback, ao->poller);
-
-    LIBXL_LIST_INSERT_HEAD(&ctx->aos_inprogress, ao, inprogress_entry);
 
     return ao;
 
@@ -2126,6 +2123,7 @@ int libxl__ao_cancellable_register(libxl__ao_cancellable *canc)
     DBG("ao=%p, canc=%p: registering (root=%p)", ao, canc, root);
     LIBXL_LIST_INSERT_HEAD(&root->cancellables, canc, entry);
     canc->registered = 1;
+    root->curr_nr_of_canc_points++; /*kkc*/
 
     return 0;
 }
@@ -2142,6 +2140,8 @@ _hidden void libxl__ao_cancellable_deregister(libxl__ao_cancellable *canc)
     DBG("ao=%p, canc=%p: deregistering (root=%p)", ao, canc, root);
     LIBXL_LIST_REMOVE(canc, entry);
     canc->registered = 0;
+    root->curr_nr_of_canc_points--; /*kkc*/
+
 }
 
 
