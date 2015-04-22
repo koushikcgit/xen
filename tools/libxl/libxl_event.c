@@ -2065,7 +2065,7 @@ static int ao__cancel(libxl_ctx *ctx, libxl__ao *parent)
     return rc;
 }
 
-_hidden int libxl_ao_cancel(libxl_ctx *ctx, const libxl_asyncop_how *how)
+int libxl_ao_cancel(libxl_ctx *ctx, const libxl_asyncop_how *how)
 {
     libxl__ao *search;
     libxl__ctx_lock(ctx);
