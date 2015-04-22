@@ -1,17 +1,20 @@
-#ifndef TEST_ASYNCTASKCANC_H
-#define TEST_ASYNCTASKCANC_H
-
-#include <pthread.h>
+#ifndef LIBXL_TEST_ASYNCTASKCANC_H
+#define LIBXL_TEST_ASYNCTASKCANC_H
 
 typedef struct _task_canc_ctx_
 {
    libxl_ctx *ctx;
    libxl_asyncop_how *how;
    uint32_t target_canc_point;
+   bool trigger_canc;
 }task_canc_ctx;
+#if 0
+/*Test cases*/
+int demo_run_tc(task_canc_ctx *ctx);
 
-int libxl_test_asynctaskcanc(libxl_ctx *ctx);
-int demo_run(libxl_ctx *ctx);
+/*internal APIs*/
+int demo_run(task_canc_ctx *task_ctx);
+#endif
 void* thread_fn_for_cancellation(void* args);
 
-#endif /*TEST_ASYNCTASKCANC_H*/
+#endif /*LIBXL_TEST_ASYNCTASKCANC_H*/
