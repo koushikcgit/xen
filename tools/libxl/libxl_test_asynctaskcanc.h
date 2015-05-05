@@ -8,13 +8,7 @@ typedef struct _task_canc_ctx_
    uint32_t target_canc_point;
    bool trigger_canc;
 }task_canc_ctx;
-#if 0
-/*Test cases*/
-int demo_run_tc(task_canc_ctx *ctx);
 
-/*internal APIs*/
-int demo_run(task_canc_ctx *task_ctx);
-#endif
 void* thread_fn_for_cancellation(void* args);
 
 #endif /*LIBXL_TEST_ASYNCTASKCANC_H*/
