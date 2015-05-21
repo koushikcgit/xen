@@ -34,6 +34,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <ctype.h>
+#include <semaphore.h>
 
 #include <sys/mman.h>
 #include <sys/poll.h>
@@ -502,6 +503,7 @@ struct libxl__ao {
     libxl__poller *poller;
     uint32_t domid;
     uint32_t curr_nr_of_canc_points; /*kkc: Current number of cancellation points that are present in the cancellables list*/
+    sem_t canc_point_check;
     LIBXL_TAILQ_ENTRY(libxl__ao) entry_for_callback;
 };
 

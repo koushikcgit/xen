@@ -30,7 +30,6 @@
 #endif
 #define DBG(args, ...) LIBXL__DBG_LOG(CTX, args, __VA_ARGS__)
 
-
 static libxl__ao *ao_nested_root(libxl__ao *ao);
 
 static void ao__check_destroy(libxl_ctx *ctx, libxl__ao *ao);
@@ -1828,6 +1827,9 @@ void libxl__ao__destroy(libxl_ctx *ctx, libxl__ao *ao)
 {
     AO_GC;
     if (!ao) return;
+    ao->curr_nr_of_canc_points = LIBXL__AO_MAGIC_DESTROYED;
+    sem_post(&ao->canc_point_check);
+    sem_destroy(&ao->canc_point_check);
     LOG(DEBUG,"ao %p: destroy",ao);
     libxl__poller_put(ctx, ao->poller);
     ao->magic = LIBXL__AO_MAGIC_DESTROYED;
@@ -1927,6 +1929,9 @@ libxl__ao *libxl__ao_create(libxl_ctx *ctx, uint32_t domid,
     ao__manip_enter(ao);
     ao->poller = 0;
     ao->domid = domid;
+
+    sem_init(&ao->canc_point_check, 0, 0);
+
     LIBXL_INIT_GC(ao->gc, ctx);
 
     if (how) {
@@ -1940,7 +1945,7 @@ libxl__ao *libxl__ao_create(libxl_ctx *ctx, uint32_t domid,
                ao, how, ao->how.callback, ao->poller);
     
     LIBXL_LIST_INSERT_HEAD(&ctx->aos_inprogress, ao, inprogress_entry);
-
+   
     return ao;
 
  out:
@@ -2127,8 +2132,9 @@ int libxl__ao_cancellable_register(libxl__ao_cancellable *canc)
     DBG("ao=%p, canc=%p: registering (root=%p)", ao, canc, root);
     LIBXL_LIST_INSERT_HEAD(&root->cancellables, canc, entry);
     canc->registered = 1;
+    
     root->curr_nr_of_canc_points++; /*kkc*/
-
+    sem_post(&root->canc_point_check);
     return 0;
 }
 
