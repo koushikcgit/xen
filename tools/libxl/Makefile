@@ -241,7 +241,7 @@ xl: $(XL_OBJS) libxlutil.so libxenlight.so
 xen-init-dom0: $(XEN_INIT_DOM0_OBJS) libxenlight.so
 	$(CC) $(LDFLAGS) -o $@ $(XEN_INIT_DOM0_OBJS) $(LDLIBS_libxenstore) $(LDLIBS_libxenlight) $(LDLIBS_libxenctrl) $(APPEND_LDFLAGS)
 
-test_%: test_%.o test_common.o libxlutil.so libxenlight_test.so
+test_%: test_%.o test_common.o test_utils.o libxlutil.so libxenlight_test.so
 	$(CC) $(LDFLAGS) -o $@ $^ $(LDLIBS_libxenlight) $(LDLIBS_libxenctrl) -lyajl $(APPEND_LDFLAGS)
 
 libxl-save-helper: $(SAVE_HELPER_OBJS) libxenlight.so
