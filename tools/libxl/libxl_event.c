@@ -1735,6 +1735,7 @@ int libxl_event_wait(libxl_ctx *ctx, libxl_event **event_r,
         CTX_UNLOCK;
         libxl__egc_cleanup(egc);
         CTX_LOCK;
+        break;
     }
 
  out:
@@ -2031,8 +2032,6 @@ static int ao__cancel(libxl_ctx *ctx, libxl__ao *parent)
         goto out;
     }
 
-    parent->cancelling = 1;
-
     if (LIBXL_LIST_EMPTY(&parent->cancellables)) {
         LIBXL__LOG(ctx, XTL_DEBUG,
                    "ao %p: cancellation requested, but not not implemented",
@@ -2040,6 +2039,8 @@ static int ao__cancel(libxl_ctx *ctx, libxl__ao *parent)
         rc = ERROR_NOTIMPLEMENTED;
         goto out;
     }
+
+    parent->cancelling = 1;
 
     /* We keep calling cancellation hooks until there are none left */
     while (!LIBXL_LIST_EMPTY(&parent->cancellables)) {
